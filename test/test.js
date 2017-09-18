@@ -571,6 +571,33 @@ describe('Page', function() {
         'Promise',
       ]);
     }));
+    it('should emit an event for each console level', SX(async function(){
+      const messages = [];
+      page.on('consoleLog', msg => messages.push(msg));
+      page.on('consoleInfo', msg => messages.push(msg));
+      page.on('consoleWarning', msg => messages.push(msg));
+      page.on('consoleDir', msg => messages.push(msg));
+      page.on('consoleTrace', msg => messages.push(msg));
+      await Promise.all([
+        page.evaluate(() => {
+          console.log('log');
+          console.info('info');
+          console.warn('warn');
+          console.trace('trace');
+          console.dir('dir');
+        }),
+        // Wait for 5 events to hit.
+        waitForEvents(page, 'console', 5),
+      ]);
+      expect(messages[0]).toContain('log');
+      expect(messages).toEqual([
+        'log',
+        'info',
+        'warn',
+        'trace',
+        'dir'
+      ]);
+    }));
     it('should not fail for window object', SX(async function() {
       let windowObj = null;
       page.once('console', arg => windowObj = arg);
